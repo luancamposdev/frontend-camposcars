@@ -11,12 +11,11 @@ import {
   ProgressBar,
 } from "react-bootstrap";
 import { useForm } from "react-hook-form";
-import { api } from "../service/api";
-import { useRouter } from "next/router";
-
+import Swal from "sweetalert2";
 import { FaPencilAlt, FaTrash } from "react-icons/fa";
 
-import Swal from "sweetalert2";
+import { api } from "../service/api";
+import { useRouter } from "next/router";
 
 export default function Administration() {
   const [cars, setCars] = useState([]);
