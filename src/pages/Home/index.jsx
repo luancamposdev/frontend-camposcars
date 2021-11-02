@@ -8,7 +8,7 @@ import {
   Dropdown,
 } from "react-bootstrap";
 
-import useRouter from "next/router";
+import Router from "next/router";
 
 import OffCanvasLogin from "../../components/FormLogin";
 import { authContext } from "../../pages/_app";
@@ -25,10 +25,13 @@ const Home = () => {
     }
   }, [camposcar]);
 
-  const route = useRouter;
-
   function handleClick() {
-    route.push("/admin");
+    Router.push("/admin");
+  }
+
+  function handleSignOut() {
+    localStorage.clear("camposcars");
+    Router.reload();
   }
 
   return (
@@ -59,6 +62,7 @@ const Home = () => {
                   <Dropdown.Item active onClick={handleClick}>
                     Administração
                   </Dropdown.Item>
+                  <Dropdown.Item onClick={handleSignOut}>Sair</Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
             ) : (

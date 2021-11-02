@@ -259,7 +259,7 @@ export default function Administration() {
               <Form.Label>Digite a Preço do carro</Form.Label>
               <Form.Control
                 {...register("price")}
-                type="text"
+                type="number"
                 placeholder="Preço do Carro"
               />
             </Form.Group>
