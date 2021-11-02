@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Navbar,
   Container,
@@ -8,89 +8,192 @@ import {
   Button,
   Modal,
   Form,
+  ProgressBar,
+  Row,
+  Col,
 } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { api } from "../service/api";
 
 import { FaPlus, FaPencilAlt, FaTrash } from "react-icons/fa";
 
-function Administration() {
+import Swal from "sweetalert2";
+
+export default function Administration() {
   const [cars, setCars] = useState([]);
+  const fileInput = React.createRef();
+  const [fullscreen, setFullscreen] = useState(true);
+  const [progress, setProgress] = useState(true);
+  const [show, setShow] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
+  const { register, handleSubmit, setValue, getValues } = useForm();
+
+  async function fetchData() {
+    const response = await api.get("/cars");
+
+    setCars(response.data);
+  }
 
   useEffect(() => {
-    async function fetchData() {
-      const response = await api.get("/cars");
-
-      setCars(response.data);
-    }
     fetchData();
   }, []);
 
-  const values = ["xxl-down"];
-  const [fullscreen, setFullscreen] = useState(true);
-  const [show, setShow] = useState(false);
+  const handleDelete = (id) => {
+    const swalWithBootstrapButtons = Swal.mixin({
+      customClass: {
+        confirmButton: 'btn btn-success',
+        cancelButton: 'btn btn-danger'
+      },
+      buttonsStyling: false
+    })
 
-  function handleShow(breakpoint) {
+    swalWithBootstrapButtons.fire({
+      title: 'Deseja excluir esse carro?',
+      text: "Esta ação não pode ser desfeita",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sim',
+      cancelButtonText: 'Não',
+      reverseButtons: true
+    }).then((result) => {
+      if (result.isConfirmed) {
+        (async () => {
+          await api.delete(`/cars/${id}`)
+
+          swalWithBootstrapButtons.fire(
+            'Excluído',
+            'Carro excluído com sucesso',
+            'success'
+          )
+
+          fetchData();
+        })()
+      } else if (
+        /* Read more about handling dismissals below */
+        result.dismiss === Swal.DismissReason.cancel
+      ) {
+
+      }
+    })
+  }
+
+  const handleShow = (breakpoint) => {
+    setValue('id', '')
+    setValue('name', '')
+    setValue('brand', '')
+    setValue('model', '')
+    setValue('price', '')
+
     setFullscreen(breakpoint);
     setShow(true);
   }
 
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState: { errors },
-  } = useForm();
+  const handleEdit = (car) => {
+    handleShow("xxl-down")
+    // setSelectedCar(car)
+    setValue('id', car.id)
+    setValue('name', car.name)
+    setValue('brand', car.brand)
+    setValue('model', car.model)
+    setValue('price', car.price)
+  }
 
   const onSubmit = async (data) => {
-    await api.post("/cars", data);
-  };
+
+    const formData = new FormData();
+
+    for (var key in data) {
+      formData.append(key, data[key]);
+    }
+
+    if (fileInput.current.files[0] !== undefined) {
+      formData.append(
+        "avatar",
+        fileInput.current.files[0],
+        fileInput.current.files[0].name
+      );
+    }
+
+    setProgress(0)
+    setShowProgress(true)
+
+    const id = getValues('id');
+
+    if (id) {
+      await api.put(`/cars/${id}`, formData, {
+        onUploadProgress: ProgressEvent => {
+          const progress = Math.round((ProgressEvent.loaded / ProgressEvent.total) * 100);
+          setProgress(progress)
+
+          if (progress === 100) {
+            setShowProgress(false)
+            setShow(false);
+          }
+
+          fetchData();
+        }
+      });
+    } else {
+      await api.post('/cars', formData, {
+        onUploadProgress: ProgressEvent => {
+          const progress = Math.round((ProgressEvent.loaded / ProgressEvent.total) * 100);
+          setProgress(progress)
+
+          if (progress === 100) {
+            setShowProgress(false)
+            setShow(false);
+          }
+
+          fetchData();
+        }
+      });
+    }
+
+  }
+
   return (
-    <>
+    <React.Fragment>
       <Navbar bg="dark" collapseOnSelect expand="lg" variant="dark">
         <Container>
           <Navbar.Brand href="/">
             <Image src="/images/logocamposcar.svg" alt="Logo" fluid />
           </Navbar.Brand>
-
-          <Navbar.Collapse
-            className="justify-content-end"
-            id="responsive-navbar-nav"
-          >
-            <Navbar color="dark" variant="dark">
-              <Nav className="me-auto ml-sm"></Nav>
-            </Navbar>
-          </Navbar.Collapse>
-          <Button className="me-2" onClick={() => handleShow("xxl-down")}>
-            Adicionar Carro
-          </Button>
-          <Navbar.Toggle aria-controls="responsive-navbar-nav" />
-          <Navbar.Brand>Área Administrativa</Navbar.Brand>
+          <div className="ms-auto">
+            <Button className="me-2" onClick={() => handleShow("xxl-down")}>
+              Adicionar Carro
+            </Button>
+            <Navbar.Brand>Área Administrativa</Navbar.Brand>
+          </div>
         </Container>
       </Navbar>
 
-      <Table striped bordered hover size="md">
+      <Table responsive striped bordered hover size="md">
         <thead>
           <tr>
+            <th></th>
             <th>Nome</th>
             <th>Marca</th>
             <th>Modelo</th>
             <th>Preço</th>
-            <th>Foto</th>
             <th>Opções</th>
           </tr>
         </thead>
         <tbody>
           {cars.map((car) => (
             <tr key={car.id}>
+              <td className="text-center">
+                <img src={car.avatar} alt={car.name} width="80" height="80" />
+              </td>
               <td>{car.name}</td>
               <td>{car.brand}</td>
               <td>{car.model}</td>
               <td>{car.price}</td>
-              <td>{car.avatar}</td>
-              <td>
-                <Button variant="outline-primary">{<FaPencilAlt />}</Button>{" "}
-                <Button variant="outline-primary">{<FaTrash />}</Button>{" "}
+
+              <td >
+                <div className="d-flex align-items-center justify-content-center">
+                  <Button variant="outline-primary" onClick={() => handleEdit(car)}>{<FaPencilAlt />}</Button>{" "}
+                  <Button variant="outline-primary" onClick={() => handleDelete(car.id)}>{<FaTrash />}</Button>{" "}
+                </div>
               </td>
             </tr>
           ))}
@@ -102,11 +205,14 @@ function Administration() {
           <Modal.Title>Adicionanr Carros</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
+          {showProgress && (
+            <ProgressBar now={progress} />
+          )}
+          <Form onSubmit={handleSubmit(onSubmit)}>
+            <input type="hidden" {...register("id")} />
             <Form.Group className="mb-3" controlId="formBasicName">
               <Form.Label>Digite o nome do Carro</Form.Label>
               <Form.Control
-                defaultValue=""
                 {...register("name")}
                 type="text"
                 placeholder="Digite o Nome do Carro"
@@ -116,7 +222,6 @@ function Administration() {
             <Form.Group className="mb-3" controlId="formBasicName">
               <Form.Label>Digite a marca do carro</Form.Label>
               <Form.Control
-                defaultValue=""
                 {...register("brand")}
                 type="text"
                 placeholder="Marca do Carro"
@@ -126,7 +231,6 @@ function Administration() {
             <Form.Group className="mb-3" controlId="formBasicName">
               <Form.Label>Digite a modelo do carro</Form.Label>
               <Form.Control
-                defaultValue=""
                 {...register("model")}
                 type="text"
                 placeholder="Modelo do Carro"
@@ -136,7 +240,6 @@ function Administration() {
             <Form.Group className="mb-3" controlId="formBasicName">
               <Form.Label>Digite a Preço do carro</Form.Label>
               <Form.Control
-                defaultValue=""
                 {...register("price")}
                 type="text"
                 placeholder="Preço do Carro"
@@ -146,20 +249,18 @@ function Administration() {
             <Form.Group className="mb-3" controlId="formBasicName">
               <Form.Label>Carregue aqui a foto do carro</Form.Label>
               <Form.Control
-                defaultValue=""
-                {...register("avatar")}
+                ref={fileInput}
                 type="file"
                 placeholder="Foto do seu Carro"
+                multiple
               />
             </Form.Group>
             <Button variant="primary" type="submit">
-              Cadastrar
+              {getValues('id') ? 'Alterar' : 'Cadastrar'}
             </Button>
           </Form>
         </Modal.Body>
       </Modal>
-    </>
+    </React.Fragment>
   );
 }
-
-export default Administration;
