@@ -7,7 +7,6 @@ import {
   Image,
   Dropdown,
 } from "react-bootstrap";
-
 import Router from "next/router";
 
 import OffCanvasLogin from "../../components/FormLogin";
@@ -38,7 +37,7 @@ const Home = () => {
     <>
       <Navbar bg="dark" collapseOnSelect expand="lg" variant="dark">
         <Container>
-          <Navbar.Brand href="/">
+          <Navbar.Brand>
             <Image src="/images/logocamposcar.svg" alt="Logo" fluid />
           </Navbar.Brand>
 

@@ -161,11 +161,15 @@ export default function Administration() {
     }
   };
 
+  function habdleClick() {
+    route.push("/");
+  }
+
   return (
     <React.Fragment>
       <Navbar bg="dark" collapseOnSelect expand="lg" variant="dark">
         <Container>
-          <Navbar.Brand href="/">
+          <Navbar.Brand onClick={habdleClick}>
             <Image src="/images/logocamposcar.svg" alt="Logo" fluid />
           </Navbar.Brand>
           <div className="ms-auto">

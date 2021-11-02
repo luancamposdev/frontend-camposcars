@@ -81,7 +81,12 @@ const Main = () => {
                   </Card.Text>
                 </Card.Body>
                 <Card.Footer>
-                  <small className="text-muted">R${car.price}</small>
+                  <small className="text-muted">
+                    {car.price.toLocaleString("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    })}
+                  </small>
                 </Card.Footer>
               </Card>
             </Col>
