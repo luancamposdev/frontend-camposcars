@@ -9,13 +9,12 @@ import {
   Modal,
   Form,
   ProgressBar,
-  Row,
-  Col,
 } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { api } from "../service/api";
+import { useRouter } from "next/router";
 
-import { FaPlus, FaPencilAlt, FaTrash } from "react-icons/fa";
+import { FaPencilAlt, FaTrash } from "react-icons/fa";
 
 import Swal from "sweetalert2";
 
@@ -28,8 +27,17 @@ export default function Administration() {
   const [showProgress, setShowProgress] = useState(false);
   const { register, handleSubmit, setValue, getValues } = useForm();
 
+  const route = useRouter();
   async function fetchData() {
-    const response = await api.get("/cars");
+    const data = JSON.parse(localStorage.getItem("camposcar"));
+    if (data === null) return route.push("/");
+    const response = await api.get("/cars", {
+      headers: {
+        Authorization: `Bearer ${data.token}`,
+      },
+    });
+
+    if (response.status !== 200) return route.push("/");
 
     setCars(response.data);
   }
@@ -41,65 +49,65 @@ export default function Administration() {
   const handleDelete = (id) => {
     const swalWithBootstrapButtons = Swal.mixin({
       customClass: {
-        confirmButton: 'btn btn-success',
-        cancelButton: 'btn btn-danger'
+        confirmButton: "btn btn-success",
+        cancelButton: "btn btn-danger",
       },
-      buttonsStyling: false
-    })
+      buttonsStyling: false,
+    });
 
-    swalWithBootstrapButtons.fire({
-      title: 'Deseja excluir esse carro?',
-      text: "Esta ação não pode ser desfeita",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sim',
-      cancelButtonText: 'Não',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        (async () => {
-          await api.delete(`/cars/${id}`)
+    swalWithBootstrapButtons
+      .fire({
+        title: "Deseja excluir esse carro?",
+        text: "Esta ação não pode ser desfeita",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sim",
+        cancelButtonText: "Não",
+        reverseButtons: true,
+      })
+      .then((result) => {
+        if (result.isConfirmed) {
+          (async () => {
+            await api.delete(`/cars/${id}`);
 
-          swalWithBootstrapButtons.fire(
-            'Excluído',
-            'Carro excluído com sucesso',
-            'success'
-          )
+            swalWithBootstrapButtons.fire(
+              "Excluído",
+              "Carro excluído com sucesso",
+              "success"
+            );
 
-          fetchData();
-        })()
-      } else if (
-        /* Read more about handling dismissals below */
-        result.dismiss === Swal.DismissReason.cancel
-      ) {
-
-      }
-    })
-  }
+            fetchData();
+          })();
+        } else if (
+          /* Read more about handling dismissals below */
+          result.dismiss === Swal.DismissReason.cancel
+        ) {
+        }
+      });
+  };
 
   const handleShow = (breakpoint) => {
-    setValue('id', '')
-    setValue('name', '')
-    setValue('brand', '')
-    setValue('model', '')
-    setValue('price', '')
+    setValue("id", "");
+    setValue("name", "");
+    setValue("brand", "");
+    setValue("model", "");
+    setValue("price", "");
 
     setFullscreen(breakpoint);
     setShow(true);
-  }
+  };
 
   const handleEdit = (car) => {
-    handleShow("xxl-down")
+    handleShow("xxl-down");
     // setSelectedCar(car)
-    setValue('id', car.id)
-    setValue('name', car.name)
-    setValue('brand', car.brand)
-    setValue('model', car.model)
-    setValue('price', car.price)
-  }
+    setValue("id", car.id);
+    setValue("name", car.name);
+    setValue("brand", car.brand);
+    setValue("model", car.model);
+    setValue("price", car.price);
+  };
 
   const onSubmit = async (data) => {
-
     const formData = new FormData();
 
     for (var key in data) {
@@ -114,42 +122,45 @@ export default function Administration() {
       );
     }
 
-    setProgress(0)
-    setShowProgress(true)
+    setProgress(0);
+    setShowProgress(true);
 
-    const id = getValues('id');
+    const id = getValues("id");
 
     if (id) {
       await api.put(`/cars/${id}`, formData, {
-        onUploadProgress: ProgressEvent => {
-          const progress = Math.round((ProgressEvent.loaded / ProgressEvent.total) * 100);
-          setProgress(progress)
+        onUploadProgress: (ProgressEvent) => {
+          const progress = Math.round(
+            (ProgressEvent.loaded / ProgressEvent.total) * 100
+          );
+          setProgress(progress);
 
           if (progress === 100) {
-            setShowProgress(false)
+            setShowProgress(false);
             setShow(false);
           }
 
           fetchData();
-        }
+        },
       });
     } else {
-      await api.post('/cars', formData, {
-        onUploadProgress: ProgressEvent => {
-          const progress = Math.round((ProgressEvent.loaded / ProgressEvent.total) * 100);
-          setProgress(progress)
+      await api.post("/cars", formData, {
+        onUploadProgress: (ProgressEvent) => {
+          const progress = Math.round(
+            (ProgressEvent.loaded / ProgressEvent.total) * 100
+          );
+          setProgress(progress);
 
           if (progress === 100) {
-            setShowProgress(false)
+            setShowProgress(false);
             setShow(false);
           }
 
           fetchData();
-        }
+        },
       });
     }
-
-  }
+  };
 
   return (
     <React.Fragment>
@@ -189,10 +200,20 @@ export default function Administration() {
               <td>{car.model}</td>
               <td>{car.price}</td>
 
-              <td >
+              <td>
                 <div className="d-flex align-items-center justify-content-center">
-                  <Button variant="outline-primary" onClick={() => handleEdit(car)}>{<FaPencilAlt />}</Button>{" "}
-                  <Button variant="outline-primary" onClick={() => handleDelete(car.id)}>{<FaTrash />}</Button>{" "}
+                  <Button
+                    variant="outline-primary"
+                    onClick={() => handleEdit(car)}
+                  >
+                    {<FaPencilAlt />}
+                  </Button>{" "}
+                  <Button
+                    variant="outline-primary"
+                    onClick={() => handleDelete(car.id)}
+                  >
+                    {<FaTrash />}
+                  </Button>{" "}
                 </div>
               </td>
             </tr>
@@ -205,9 +226,7 @@ export default function Administration() {
           <Modal.Title>Adicionanr Carros</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {showProgress && (
-            <ProgressBar now={progress} />
-          )}
+          {showProgress && <ProgressBar now={progress} />}
           <Form onSubmit={handleSubmit(onSubmit)}>
             <input type="hidden" {...register("id")} />
             <Form.Group className="mb-3" controlId="formBasicName">
@@ -256,7 +275,7 @@ export default function Administration() {
               />
             </Form.Group>
             <Button variant="primary" type="submit">
-              {getValues('id') ? 'Alterar' : 'Cadastrar'}
+              {getValues("id") ? "Alterar" : "Cadastrar"}
             </Button>
           </Form>
         </Modal.Body>
