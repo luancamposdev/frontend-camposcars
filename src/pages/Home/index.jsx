@@ -62,9 +62,11 @@ const Home = () => {
                 </Dropdown.Menu>
               </Dropdown>
             ) : (
-              <Navbar.Text>
-                <OffCanvasLogin placement="end" name="Entrar" />
-              </Navbar.Text>
+              <>
+                <Navbar.Text>
+                  <OffCanvasLogin placement="end" name="Entrar" />
+                </Navbar.Text>
+              </>
             )}
           </Navbar.Collapse>
           <Navbar.Toggle aria-controls="responsive-navbar-nav" />
