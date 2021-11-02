@@ -43,9 +43,7 @@ function Administration() {
   } = useForm();
 
   const onSubmit = async (data) => {
-    const { name, brand, model, price, avatar } = data;
-
-    await api.post("/cars", { name, brand, model, price, avatar });
+    await api.post("/cars", data);
   };
   return (
     <>
@@ -104,7 +102,7 @@ function Administration() {
           <Modal.Title>Adicionanr Carros</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form onSubmit={handleSubmit(onSubmit)} encType="multipart/form-data">
             <Form.Group className="mb-3" controlId="formBasicName">
               <Form.Label>Digite o nome do Carro</Form.Label>
               <Form.Control
